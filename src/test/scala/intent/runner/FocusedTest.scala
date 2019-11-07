@@ -51,7 +51,7 @@ class FocusedTest extends TestSuite with State[FocusedTestCase] with
   )
 
 case class FocusedTestCase(
-  suiteClassName: String = null,
+  suiteClassName: String | Null = null,
   expectedSuccessful:Int = 0,
   expectedIgnored:Int = 0,
   focused: Boolean = false)(given ec: ExecutionContext) extends TestSuiteRunnerTester

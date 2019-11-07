@@ -9,9 +9,9 @@ import java.io.{PrintWriter, StringWriter}
 
 class Framework extends SFramework with
   def name(): String = "intent"
-  def fingerprints(): Array[Fingerprint] = Array(IntentFingerprint)
-  def runner(args: Array[String], remoteArgs: Array[String], testClassLoader: ClassLoader): Runner =
-    new SbtRunner(args, remoteArgs, testClassLoader)
+  def fingerprints(): Array[Fingerprint | Null] = Array(IntentFingerprint)
+  def runner(args: Array[String | Null] | Null, remoteArgs: Array[String | Null] | Null, testClassLoader: ClassLoader | Null): Runner =
+    new SbtRunner(args.nn, remoteArgs.nn, testClassLoader.nn)
 
 private def printErrorWithPrefix(t: Throwable, linePrefix: String): String =
   val sw = StringWriter()
@@ -35,8 +35,8 @@ object IntentFingerprint extends SubclassFingerprint with
  * A single run of a single test (controlled by SBT)
  */
 class SbtRunner(
-  val args: Array[String],
-  val remoteArgs: Array[String],
+  val args: Array[String | Null],
+  val remoteArgs: Array[String | Null],
   classLoader: ClassLoader
 ) extends Runner with
 
@@ -49,12 +49,12 @@ class SbtRunner(
    * Called by SBT with all the classes that match our fingerprint.
    *
    */
-  def tasks(potentialTasks: Array[TaskDef]): Array[Task] =
+  def tasks(potentialTasks: Array[TaskDef | Null] | Null): Array[Task | Null] =
     case class Suite(td: TaskDef, structure: IntentStructure)
 
     val runner = new TestSuiteRunner(classLoader)
     var focusMode = false
-    var potentialSuites: Array[Suite] = potentialTasks
+    var potentialSuites: Array[Suite] = potentialTasks.nn.map(_.nn)
       .map(td => {
         runner.evaluateSuite(td.fullyQualifiedName) match {
           case Left(ex) =>
@@ -83,12 +83,12 @@ class SbtTask(td: TaskDef, suit: IntentStructure, runner: TestSuiteRunner, focus
   override def taskDef = td
 
   // Tagging tests or suites are currently not supported
-  override def tags(): Array[String] = Array.empty
+  override def tags(): Array[String | Null] = Array.empty
 
-  override def execute(handler: EventHandler, loggers: Array[Logger]): Array[Task] =
+  override def execute(handler: EventHandler | Null, loggers: Array[Logger | Null] | Null): Array[Task | Null] =
     implicit val ec = ExecutionContext.global
     // Hmm, do we need really to block here? Does SBT come with something included to be async
-    Await.result(executeSuite(handler, loggers), Duration.Inf)
+    Await.result(executeSuite(handler.nn, loggers.nn.map(_.nn)).asInstanceOf[Future[Array[Task | Null]]], Duration.Inf)
 
   private def executeSuite(handler: EventHandler, loggers: Array[Logger])(given ec: ExecutionContext): Future[Array[Task]] =
     object lock
