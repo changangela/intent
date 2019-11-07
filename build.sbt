@@ -25,7 +25,11 @@ lazy val root = project
     testFrameworks += new TestFramework("intent.sbt.Framework"),
 
     // Without -Yindent-colons, the editor and compiler get out of sync for me - Per
-    scalacOptions += "-Yindent-colons",
+    scalacOptions ++= Seq(
+      "-Yindent-colons",
+      "-Yexplicit-nulls",
+      "-Yjava-interop-dont-nullify-outermost"
+    ),
 
     // include the macro classes and resources in the main jar
     mappings in (Compile, packageBin) ++= mappings.in(macros, Compile, packageBin).value,
